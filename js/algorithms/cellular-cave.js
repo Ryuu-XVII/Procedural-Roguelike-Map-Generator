@@ -1,6 +1,4 @@
-/**
- * Cellular Automata Cave Generator
- */
+// ca cave gen
 export class CellularCaveGenerator {
   constructor(width = 60, height = 40, seed = "cave789") {
     this.width = width;
@@ -10,12 +8,12 @@ export class CellularCaveGenerator {
     this.grid = [];
     this.snapshots = [];
 
-    // Configs
+    // configs
     this.initialWallProbability = 0.45; // 45% walls
     this.iterations = 5;
   }
 
-  // mulberry32 seedable generator
+  // prng mulberry32
   createRandom(seedStr) {
     let hash = 0;
     for (let i = 0; i < seedStr.length; i++) {
@@ -67,7 +65,7 @@ export class CellularCaveGenerator {
     };
   }
 
-  // Count walls in a 3x3 grid around (x,y)
+  // count neighbors
   countWallNeighbors(x, y, gridRef) {
     let count = 0;
     for (let dy = -1; dy <= 1; dy++) {
@@ -75,7 +73,7 @@ export class CellularCaveGenerator {
         const nx = x + dx;
         const ny = y + dy;
 
-        // Count out of bounds as walls to keep map edges solid
+        // count out of bounds as walls to keep map edges solid
         if (nx < 0 || nx >= this.width || ny < 0 || ny >= this.height) {
           count++;
         } else if (gridRef[ny][nx] === 0) {
@@ -90,22 +88,22 @@ export class CellularCaveGenerator {
     this.snapshots = [];
     this.random = this.createRandom(this.seedString);
 
-    // Step 0: Randomly seed the map
+    // seed random walls
     this.grid = Array(this.height).fill(null).map(() => Array(this.width).fill(0));
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        // Map borders are always solid walls
+        // edge walls
         if (x === 0 || x === this.width - 1 || y === 0 || y === this.height - 1) {
           this.grid[y][x] = 0;
         } else {
-          this.grid[y][x] = this.random() < this.initialWallProbability ? 0 : 1; // 0 = Wall, 1 = Floor
+          this.grid[y][x] = this.random() < this.initialWallProbability ? 0 : 1; // 0 = wall, 1 = floor
         }
       }
     }
     
     this.recordSnapshot(`Generated initial white noise layout. Approximately ${Math.round(this.initialWallProbability * 100)}% tiles are set as solid rock.`);
 
-    // Run cellular automata smoothing passes
+    // smooth cave loop
     for (let i = 1; i <= this.iterations; i++) {
       const nextGrid = this.cloneGrid(this.grid);
       const changes = [];
@@ -114,10 +112,7 @@ export class CellularCaveGenerator {
         for (let x = 1; x < this.width - 1; x++) {
           const walls = this.countWallNeighbors(x, y, this.grid);
           
-          // B45678/S5678 rule variant:
-          // If 5 or more neighbors are walls, this cell becomes a wall.
-          // If 3 or fewer neighbors are walls, it becomes a floor.
-          // Otherwise, it retains its state.
+          // ca cave rules: >=5 is wall, <=3 is floor
           if (walls >= 5) {
             if (this.grid[y][x] !== 0) {
               nextGrid[y][x] = 0;
@@ -135,25 +130,25 @@ export class CellularCaveGenerator {
       this.recordSnapshot(`Cellular Automata Pass #${i}: Applied 5-neighbor density thresholds. Smoothed jagged borders.`, changes.slice(0, 100));
     }
 
-    // Flood fill to analyze disconnected chambers
+    // find separate caves
     this.cleanIsolatedChambers();
 
-    // Place Player, chest, and monsters
+    // spawn things
     this.decorateCave();
 
     return this.snapshots;
   }
 
-  // Flood-fill connectivity check and cleaning
+  // bfs clean
   cleanIsolatedChambers() {
     const visited = Array(this.height).fill(null).map(() => Array(this.width).fill(false));
     const chambers = [];
 
-    // Find all seperate floor chambers
+    // find all seperate floor chambers
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
         if (this.grid[y][x] === 1 && !visited[y][x]) {
-          // Found a new chamber! Perform BFS
+          // flood fill group
           const chamber = [];
           const queue = [{ x, y }];
           visited[y][x] = true;
@@ -191,12 +186,12 @@ export class CellularCaveGenerator {
       return;
     }
 
-    // Sort chambers by size descending
+    // sort groups
     chambers.sort((a, b) => b.length - a.length);
     const mainChamber = chambers[0];
     const isolatedChambers = chambers.slice(1);
 
-    // Highlight the isolated regions we are about to fill in with walls
+    // show pruned caves
     const highlights = [];
     isolatedChambers.forEach((chamber, chamberIdx) => {
       chamber.forEach(tile => {
@@ -209,10 +204,10 @@ export class CellularCaveGenerator {
       highlights
     );
 
-    // Fill isolated chambers with walls
+    // seal extra caves
     isolatedChambers.forEach(chamber => {
       chamber.forEach(tile => {
-        this.grid[tile.y][tile.x] = 0; // Turn back into solid wall
+        this.grid[tile.y][tile.x] = 0; // turn back into solid wall
       });
     });
 
@@ -220,7 +215,7 @@ export class CellularCaveGenerator {
   }
 
   decorateCave() {
-    // Collect all open floor tiles
+    // get valid floor tiles
     const floors = [];
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
@@ -232,12 +227,12 @@ export class CellularCaveGenerator {
 
     if (floors.length < 5) return;
 
-    // Place Player (4) and Gold Chest (5) far apart
+    // player/chest far apart
     const playerIndex = Math.floor(this.random() * floors.length);
     const playerTile = floors[playerIndex];
-    this.grid[playerTile.y][playerTile.x] = 4; // 4 = Player
+    this.grid[playerTile.y][playerTile.x] = 4; // 4 = player
 
-    // Find furthest tile
+    // max dist
     let furthestTile = floors[0];
     let maxDist = -1;
     floors.forEach(tile => {
@@ -247,9 +242,9 @@ export class CellularCaveGenerator {
         furthestTile = tile;
       }
     });
-    this.grid[furthestTile.y][furthestTile.x] = 5; // 5 = Chest
+    this.grid[furthestTile.y][furthestTile.x] = 5; // 5 = chest
 
-    // 1. Place organic Water pools (13) and Lava pools (14) inside open floors
+    // organic water/lava pools
     const poolFloors = floors.filter(t => this.grid[t.y][t.x] === 1);
     if (poolFloors.length > 25) {
       const waterSeed = poolFloors[Math.floor(this.random() * poolFloors.length)];
@@ -293,19 +288,19 @@ export class CellularCaveGenerator {
       }
     }
 
-    // 2. Stalagmites (15) inside corners and narrow zones
+    // stalagmites in narrow spots
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
         if (this.grid[y][x] === 1) {
           const walls = this.countWallNeighbors(x, y, this.grid);
           if (walls >= 4 && this.random() < 0.22) {
-            this.grid[y][x] = 15; // 15 = Stalagmite
+            this.grid[y][x] = 15; // 15 = stalagmite
           }
         }
       }
     }
 
-    // 3. Add enemies (6) on remaining open floors
+    // enemies spawn
     const enemiesToPlace = Math.min(12, Math.floor(floors.length / 40));
     let placedEnemies = 0;
     const enemyHighlights = [];
@@ -316,7 +311,7 @@ export class CellularCaveGenerator {
       
       const distToPlayer = Math.abs(tile.x - playerTile.x) + Math.abs(tile.y - playerTile.y);
       if (this.grid[tile.y][tile.x] === 1 && distToPlayer > 8) {
-        this.grid[tile.y][tile.x] = 6; // Enemy
+        this.grid[tile.y][tile.x] = 6; // enemy
         enemyHighlights.push({ x: tile.x, y: tile.y, type: 'enemy_place' });
         placedEnemies++;
       }

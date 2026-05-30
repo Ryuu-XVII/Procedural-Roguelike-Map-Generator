@@ -1,65 +1,63 @@
-/**
- * Canvas Renderer with Interactive Pan, Zoom, and Custom Stylized Tile Renderers
- */
+// draw to canvas
 export class CanvasRenderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     
-    // Pan & Zoom state
+    // pan & zoom
     this.zoom = 1.0;
     this.panX = 0;
     this.panY = 0;
     
-    // Drag state
+    // drag
     this.isDragging = false;
     this.startX = 0;
     this.startY = 0;
     
-    // Grid settings
-    this.tileSize = 16; // Pixels per grid tile
+    // grid
+    this.tileSize = 16; // pixels per grid tile
     this.showGrid = false;
     
-    // Color palettes
+    // colors
     this.colors = {
       dungeon: {
-        wall: '#111827',         // Very dark gray
-        wallShadow: '#030712',   // Deeper shadow
-        floorRoom: '#374151',    // Medium warm gray
-        floorCorridor: '#4b5563',// Cool gray
-        door: '#b45309',         // Amber wood
-        player: '#10b981',       // Emerald neon
-        chest: '#fbbf24',        // Gold
-        enemy: '#f87171',        // Coral red
-        splitV: 'rgba(239, 68, 68, 0.4)',  // Translucent split lines
+        wall: '#111827',         // very dark gray
+        wallShadow: '#030712',   // deeper shadow
+        floorRoom: '#374151',    // medium warm gray
+        floorCorridor: '#4b5563',// cool gray
+        door: '#b45309',         // amber wood
+        player: '#10b981',       // emerald neon
+        chest: '#fbbf24',        // gold
+        enemy: '#f87171',        // coral red
+        splitV: 'rgba(239, 68, 68, 0.4)',  // translucent split lines
         splitH: 'rgba(59, 130, 246, 0.4)',
         highlightCorridor: 'rgba(245, 158, 11, 0.3)'
       },
       cave: {
-        wall: '#18181b',         // Dark zinc
-        floor: '#27272a',        // Light zinc
-        player: '#10b981',       // Emerald
-        chest: '#f59e0b',        // Amber
-        enemy: '#ef4444',        // Red
+        wall: '#18181b',         // dark zinc
+        floor: '#27272a',        // light zinc
+        player: '#10b981',       // emerald
+        chest: '#f59e0b',        // amber
+        enemy: '#ef4444',        // red
         isolatedHighlight: 'rgba(239, 68, 68, 0.4)'
       },
       terrain: {
-        deepWater: '#1e3a8a',    // Deep blue
-        shallowWater: '#1d4ed8', // Medium blue
-        sand: '#fef08a',         // Sand yellow
-        grass: '#22c55e',        // Grass green
-        forest: '#15803d',       // Dark forest green
-        rock: '#78716c',         // Stone gray
-        snow: '#fafaf9',         // White snow
-        city: '#e11d48',         // Neon Rose
-        ship: '#ffffff'          // White sail
+        deepWater: '#1e3a8a',    // deep blue
+        shallowWater: '#1d4ed8', // medium blue
+        sand: '#fef08a',         // sand yellow
+        grass: '#22c55e',        // grass green
+        forest: '#15803d',       // dark forest green
+        rock: '#78716c',         // stone gray
+        snow: '#fafaf9',         // white snow
+        city: '#e11d48',         // neon rose
+        ship: '#ffffff'          // white sail
       }
     };
 
     this.initEvents();
   }
 
-  // Set up interaction listeners
+  // user pan/zoom listeners
   initEvents() {
     this.canvas.addEventListener('mousedown', (e) => {
       this.isDragging = true;
@@ -92,15 +90,15 @@ export class CanvasRenderer {
         newZoom /= zoomFactor;
       }
 
-      // Bound zoom between 0.3x and 8.0x
+      // bound zoom between 0.3x and 8.0x
       newZoom = Math.max(0.3, Math.min(8.0, newZoom));
       
-      // Zoom centered on mouse cursor cooridinate
+      // zoom centered on mouse cursor cooridinate
       const rect = this.canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      // Adjust pan cooridinates to keep mouse position anchored
+      // adjust pan cooridinates to keep mouse position anchored
       this.panX = mouseX - (mouseX - this.panX) * (newZoom / this.zoom);
       this.panY = mouseY - (mouseY - this.panY) * (newZoom / this.zoom);
       this.zoom = newZoom;
@@ -108,7 +106,7 @@ export class CanvasRenderer {
       this.requestRedraw();
     }, { passive: false });
 
-    // Touch Support for Mobile
+    // mobile touches
     let lastTouchX = 0, lastTouchY = 0;
     this.canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
@@ -137,12 +135,12 @@ export class CanvasRenderer {
     this.canvas.style.cursor = 'grab';
   }
 
-  // Request redraw is managed by the app orchestrator
+  // redraw trigger
   requestRedraw() {
     if (this.onRedraw) this.onRedraw();
   }
 
-  // Adjust cooridinates so the map centers within the viewport
+  // adjust cooridinates so the map centers within the viewport
   centerMap(mapW, mapH) {
     const rect = this.canvas.getBoundingClientRect();
     const mapPixelW = mapW * this.tileSize * this.zoom;
@@ -152,11 +150,11 @@ export class CanvasRenderer {
     this.panY = (rect.height - mapPixelH) / 2;
   }
 
-  // Main drawing pipeline
+  // main drawing pipeline
   render(snapshot, mapType) {
     if (!snapshot || !snapshot.grid) return;
     
-    // Normalize string key values from external app controllers
+    // normalize string key values from external app controllers
     if (mapType === 'bsp') mapType = 'dungeon';
     if (mapType === 'ca') mapType = 'cave';
     
@@ -164,20 +162,20 @@ export class CanvasRenderer {
     const height = grid.length;
     const width = grid[0].length;
 
-    // Clear the entire canvas buffer using absolute pixel transforms (prevents scale distortion)
+    // clear screen absolute (no scaling issues)
     this.ctx.save();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.fillStyle = '#090d16'; // Deep dark slate background
+    this.ctx.fillStyle = '#090d16'; // deep dark slate background
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.restore();
 
     this.ctx.save();
     
-    // Apply pan and zoom transforms
+    // apply pan/zoom scale
     this.ctx.translate(this.panX, this.panY);
     this.ctx.scale(this.zoom, this.zoom);
 
-    // 1. Draw Map Tiles
+    // draw map grid
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const val = grid[y][x];
@@ -185,7 +183,7 @@ export class CanvasRenderer {
       }
     }
 
-    // 1.5 Draw ambiant Torches Glow Lighting Overlay (Dungeon mode)
+    // ambient torches overlay
     if (mapType === 'dungeon') {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -194,8 +192,8 @@ export class CanvasRenderer {
             const ty = y * this.tileSize + this.tileSize - 8;
             
             const grad = this.ctx.createRadialGradient(tx, ty, 2, tx, ty, 64);
-            grad.addColorStop(0, 'rgba(249, 115, 22, 0.28)'); // Amber core
-            grad.addColorStop(0.4, 'rgba(249, 115, 22, 0.1)'); // Fading halo
+            grad.addColorStop(0, 'rgba(249, 115, 22, 0.28)'); // amber core
+            grad.addColorStop(0.4, 'rgba(249, 115, 22, 0.1)'); // fading halo
             grad.addColorStop(1, 'rgba(249, 115, 22, 0)');
             
             this.ctx.fillStyle = grad;
@@ -207,7 +205,7 @@ export class CanvasRenderer {
       }
     }
 
-    // 1.6 Draw ambiant Magma Thermal Glow (Cave mode)
+    // 1.6 draw ambiant magma thermal glow (cave mode)
     if (mapType === 'cave') {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -216,7 +214,7 @@ export class CanvasRenderer {
             const ty = y * this.tileSize + this.tileSize / 2;
             
             const grad = this.ctx.createRadialGradient(tx, ty, 2, tx, ty, 36);
-            grad.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); // Soft neon red
+            grad.addColorStop(0, 'rgba(239, 68, 68, 0.2)'); // soft neon red
             grad.addColorStop(0.5, 'rgba(239, 68, 68, 0.05)');
             grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
             
@@ -229,7 +227,7 @@ export class CanvasRenderer {
       }
     }
 
-    // 2. Draw algorythm Specific Visualizations (e.g. BSP cuts or search areas)
+    // 2. draw algorythm specific visualizations (e.g. bsp cuts or search areas)
     if (mapType === 'dungeon') {
       this.drawDungeonOverlays(snapshot);
     } else if (mapType === 'cave') {
@@ -238,7 +236,7 @@ export class CanvasRenderer {
       this.drawTerrainOverlays(snapshot);
     }
 
-    // 3. Draw Grid Lines (optional overlay)
+    // optional grid overlay
     if (this.showGrid) {
       this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
       this.ctx.lineWidth = 0.5;
@@ -258,7 +256,7 @@ export class CanvasRenderer {
     this.ctx.restore();
   }
 
-  // Draw tile depending on map mode
+  // draw single tile
   drawTile(x, y, val, mapType, phase) {
     const size = this.tileSize;
     const px = x * size;
@@ -267,23 +265,23 @@ export class CanvasRenderer {
     if (mapType === 'dungeon') {
       const colors = this.colors.dungeon;
       switch (val) {
-        case 0: // Wall (draw beautyful block with 3D shadow and brick line)
+        case 0: // wall (draw beautyful block with 3d shadow and brick line)
           this.ctx.fillStyle = colors.wall;
           this.ctx.fillRect(px, py, size, size);
           
-          // Draw light bevel border on top
-          this.ctx.fillStyle = '#334155'; // Bevel grey
+          // wall top border
+          this.ctx.fillStyle = '#334155'; // bevel grey
           this.ctx.fillRect(px, py, size, 1.5);
           
-          // Draw slight inner shadow / bevel
+          // wall shadow
           this.ctx.fillStyle = colors.wallShadow;
           this.ctx.fillRect(px, py + size - 2, size, 2);
           break;
-        case 1: // Room Floor (cracks and moss detail)
+        case 1: // floor
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           
-          // Deterministic detail textures
+          // deterministic detail textures
           const hashFloor = (x * 17 + y * 31) % 15;
           if (hashFloor === 0) {
             this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
@@ -314,48 +312,48 @@ export class CanvasRenderer {
           this.ctx.lineTo(px + size / 2, py + size);
           this.ctx.stroke();
           break;
-        case 3: // Door
+        case 3: // door
           this.ctx.fillStyle = colors.floorCorridor;
           this.ctx.fillRect(px, py, size, size);
           
-          // Heavy wood arches
+          // door block
           this.ctx.fillStyle = '#78350f'; 
           this.ctx.fillRect(px + 1, py + 1, size - 2, size - 2);
           this.ctx.fillStyle = colors.door;
           this.ctx.fillRect(px + 3, py + 3, size - 6, size - 6);
           
-          // Handle dot
+          // handle dot
           this.ctx.fillStyle = '#000000';
           this.ctx.fillRect(px + size/2 - 2, py + size/2 - 1, 2, 2);
           break;
-        case 4: // Player Hero
+        case 4: // player
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           this.drawActor(px + size / 2, py + size / 2, size / 2 - 2, colors.player);
           break;
-        case 5: // Golden Chest
+        case 5: // treasure
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           this.drawChest(px, py, size, colors.chest);
           break;
-        case 6: // Orc Enemy
+        case 6: // enemy
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           this.drawActor(px + size / 2, py + size / 2, size / 2 - 3, colors.enemy, true);
           break;
-        case 7: // Wall Torch
+        case 7: // torch placement
           this.ctx.fillStyle = colors.wall;
           this.ctx.fillRect(px, py, size, size);
           
-          // Bevels
+          // bevels
           this.ctx.fillStyle = '#334155';
           this.ctx.fillRect(px, py, size, 1.5);
           
-          // Bracket holder
+          // torch holder
           this.ctx.fillStyle = '#4b5563';
           this.ctx.fillRect(px + size/2 - 2, py + size - 6, 4, 6);
           
-          // Flame
+          // torch fire
           this.ctx.fillStyle = '#f97316'; // orange flame
           this.ctx.beginPath();
           this.ctx.arc(px + size/2, py + size - 8, 3, 0, Math.PI * 2);
@@ -366,7 +364,7 @@ export class CanvasRenderer {
           this.ctx.arc(px + size/2, py + size - 8, 1.5, 0, Math.PI * 2);
           this.ctx.fill();
           break;
-        case 8: // Cobweb
+        case 8: // cobweb
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           
@@ -379,29 +377,29 @@ export class CanvasRenderer {
           this.ctx.lineTo(px + size / 2, py);
           this.ctx.stroke();
           break;
-        case 9: // Pillar
+        case 9: // pillar
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           
-          // Base pedestal
+          // base pedestal
           this.ctx.fillStyle = '#1e293b';
           this.ctx.beginPath();
           this.ctx.arc(px + size/2, py + size/2, size/2 - 1, 0, Math.PI * 2);
           this.ctx.fill();
           
-          // Column shaft
+          // column shaft
           this.ctx.fillStyle = '#64748b';
           this.ctx.beginPath();
           this.ctx.arc(px + size/2, py + size/2, size/2 - 3, 0, Math.PI * 2);
           this.ctx.fill();
           
-          // Cap highlights
+          // pillar top
           this.ctx.fillStyle = '#94a3b8';
           this.ctx.beginPath();
           this.ctx.arc(px + size/2 - 1, py + size/2 - 1, size/4, 0, Math.PI * 2);
           this.ctx.fill();
           break;
-        case 10: // Gold Coins
+        case 10: // gold coins
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           
@@ -412,11 +410,11 @@ export class CanvasRenderer {
           this.ctx.arc(px + 7, py + 11, 2, 0, Math.PI * 2);
           this.ctx.fill();
           break;
-        case 11: // Broken Pot
+        case 11: // broken pot
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           
-          this.ctx.fillStyle = '#b45309'; // Clay brown
+          this.ctx.fillStyle = '#b45309'; // clay brown
           this.ctx.beginPath();
           this.ctx.moveTo(px + 4, py + 4);
           this.ctx.lineTo(px + 9, py + 8);
@@ -428,7 +426,7 @@ export class CanvasRenderer {
           this.ctx.arc(px + 11, py + 5, 2, 0, Math.PI * 2);
           this.ctx.fill();
           break;
-        case 12: // Skeleton Shards
+        case 12: // skeleton shards
           this.ctx.fillStyle = colors.floorRoom;
           this.ctx.fillRect(px, py, size, size);
           
@@ -448,61 +446,61 @@ export class CanvasRenderer {
     } else if (mapType === 'cave') {
       const colors = this.colors.cave;
       switch (val) {
-        case 0: // Cave stone wall
+        case 0: // cave stone wall
           this.ctx.fillStyle = colors.wall;
           this.ctx.fillRect(px, py, size, size);
           
-          // Stone block lines
+          // stone block lines
           this.ctx.strokeStyle = '#27272a';
           this.ctx.lineWidth = 0.5;
           this.ctx.strokeRect(px + 1, py + 1, size - 2, size - 2);
           break;
-        case 1: // Cave smooth path
+        case 1: // cave smooth path
           this.ctx.fillStyle = colors.floor;
           this.ctx.fillRect(px, py, size, size);
           
-          // Organic moss speckles
+          // organic moss speckles
           this.ctx.fillStyle = 'rgba(16, 185, 129, 0.03)';
           this.ctx.fillRect(px + (x % 3) * 4, py + (y % 3) * 4, 3, 3);
           break;
-        case 4: // Player
+        case 4: // player
           this.ctx.fillStyle = colors.floor;
           this.ctx.fillRect(px, py, size, size);
           this.drawActor(px + size / 2, py + size / 2, size / 2 - 2, colors.player);
           break;
-        case 5: // Gold Chest
+        case 5: // gold chest
           this.ctx.fillStyle = colors.floor;
           this.ctx.fillRect(px, py, size, size);
           this.drawChest(px, py, size, colors.chest);
           break;
-        case 6: // Cave spider/enemy
+        case 6: // cave spider/enemy
           this.ctx.fillStyle = colors.floor;
           this.ctx.fillRect(px, py, size, size);
           this.drawActor(px + size / 2, py + size / 2, size / 2 - 3, colors.enemy, true);
           break;
-        case 13: // Water Pool
+        case 13: // water pool
           this.ctx.fillStyle = '#1d4ed8'; // deep blue water
           this.ctx.fillRect(px, py, size, size);
           
-          // Ripple circle detail
+          // ripple circle detail
           this.ctx.strokeStyle = '#3b82f6';
           this.ctx.lineWidth = 0.5;
           this.ctx.strokeRect(px + 2, py + 2, size - 4, size - 4);
           break;
-        case 14: // Magma Pool
+        case 14: // magma pool
           this.ctx.fillStyle = '#b91c1c'; // basalt red
           this.ctx.fillRect(px, py, size, size);
           
-          // Magma crack highlights
+          // magma crack highlights
           this.ctx.fillStyle = '#f97316'; // orange glow
           this.ctx.fillRect(px + 3, py + 2, 4, 2);
           this.ctx.fillRect(px + 8, py + 9, 3, 3);
           break;
-        case 15: // Stalagmite
+        case 15: // stalagmite
           this.ctx.fillStyle = colors.floor;
           this.ctx.fillRect(px, py, size, size);
           
-          // Pointy stone spire
+          // pointy stone spire
           this.ctx.fillStyle = '#3f3f46';
           this.ctx.beginPath();
           this.ctx.moveTo(px + size/2, py + 2);
@@ -511,7 +509,7 @@ export class CanvasRenderer {
           this.ctx.closePath();
           this.ctx.fill();
           
-          // Highlight cap
+          // highlight cap
           this.ctx.fillStyle = '#71717a';
           this.ctx.beginPath();
           this.ctx.moveTo(px + size/2, py + 2);
@@ -524,30 +522,30 @@ export class CanvasRenderer {
     } else if (mapType === 'terrain') {
       const colors = this.colors.terrain;
       if (phase === 'heightmap') {
-        // Render height values directly as gorgeous grayscale
+        // render height values directly as gorgeous grayscale
         const v = Math.round(val * 255);
         this.ctx.fillStyle = `rgb(${v}, ${v}, ${v})`;
         this.ctx.fillRect(px, py, size, size);
       } else {
-        // Biome mapping
+        // map biomes
         switch (val) {
-          case 0: // Deep Water
+          case 0: // deep water
             this.ctx.fillStyle = colors.deepWater;
             break;
-          case 0.5: // Shallow Water
+          case 0.5: // shallow water
             this.ctx.fillStyle = colors.shallowWater;
             break;
-          case 1: // Beach
+          case 1: // beach
             this.ctx.fillStyle = colors.sand;
             break;
-          case 2: // Plains
+          case 2: // plains
             this.ctx.fillStyle = colors.grass;
             break;
-          case 3: // Forest (Draw organic pine tree silhouette)
+          case 3: // forest (draw organic pine tree silhouette)
             this.ctx.fillStyle = colors.forest;
             this.ctx.fillRect(px, py, size, size);
             
-            this.ctx.fillStyle = '#14532d'; // Pine shadow green
+            this.ctx.fillStyle = '#14532d'; // pine shadow green
             this.ctx.beginPath();
             this.ctx.moveTo(px + size / 2, py + 3);
             this.ctx.lineTo(px + size - 3, py + size - 2);
@@ -555,7 +553,7 @@ export class CanvasRenderer {
             this.ctx.closePath();
             this.ctx.fill();
             break;
-          case 4: // Stone Mounts (slate rocky peaks)
+          case 4: // stone mounts (slate rocky peaks)
             this.ctx.fillStyle = colors.rock;
             this.ctx.fillRect(px, py, size, size);
             
@@ -567,11 +565,11 @@ export class CanvasRenderer {
             this.ctx.closePath();
             this.ctx.fill();
             break;
-          case 5: // Snow (Rocky peaks with beveled snow caps)
+          case 5: // snow (rocky peaks with beveled snow caps)
             this.ctx.fillStyle = colors.rock;
             this.ctx.fillRect(px, py, size, size);
             
-            // Stone base peak
+            // stone base peak
             this.ctx.fillStyle = '#44403c'; 
             this.ctx.beginPath();
             this.ctx.moveTo(px + size / 2, py + 2);
@@ -580,7 +578,7 @@ export class CanvasRenderer {
             this.ctx.closePath();
             this.ctx.fill();
             
-            // White snow cap
+            // white snow cap
             this.ctx.fillStyle = '#fafaf9'; // pure white
             this.ctx.beginPath();
             this.ctx.moveTo(px + size / 2, py + 2);
@@ -589,12 +587,12 @@ export class CanvasRenderer {
             this.ctx.closePath();
             this.ctx.fill();
             break;
-          case 7: // Keep Castle
+          case 7: // keep castle
             this.ctx.fillStyle = colors.grass;
             this.ctx.fillRect(px, py, size, size);
             this.drawCastle(px, py, size, colors.city);
             return;
-          case 8: // Trade ship
+          case 8: // trade ship
             this.ctx.fillStyle = colors.shallowWater;
             this.ctx.fillRect(px, py, size, size);
             this.drawShip(px, py, size, colors.ship);
@@ -605,7 +603,7 @@ export class CanvasRenderer {
     }
   }
 
-  // Draw circular character actor (with optional spikes for hostile enemies)
+  // character circle
   drawActor(cx, cy, r, color, isEnemy = false) {
     this.ctx.shadowColor = color;
     this.ctx.shadowBlur = 6;
@@ -615,28 +613,28 @@ export class CanvasRenderer {
     this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
     this.ctx.fill();
 
-    this.ctx.shadowBlur = 0; // Reset shadow
+    this.ctx.shadowBlur = 0; // reset shadow
 
-    // Add detailed inner pattern
+    // add detailed inner pattern
     this.ctx.strokeStyle = '#000000';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     
     if (isEnemy) {
-      // Draw angry eyes (cross)
+      // angry eyes
       this.ctx.moveTo(cx - 2, cy - 2);
       this.ctx.lineTo(cx - 0.5, cy - 0.5);
       this.ctx.moveTo(cx + 2, cy - 2);
       this.ctx.lineTo(cx + 0.5, cy - 0.5);
       this.ctx.stroke();
     } else {
-      // Draw standard inner shield details
+      // shield lines
       this.ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
       this.ctx.stroke();
     }
   }
 
-  // Draw gold chest detail
+  // draw gold chest detail
   drawChest(px, py, size, color) {
     const margin = 3;
     const cx = px + margin;
@@ -647,7 +645,7 @@ export class CanvasRenderer {
     this.ctx.shadowColor = color;
     this.ctx.shadowBlur = 6;
     
-    // Main gold box
+    // main gold box
     this.ctx.fillStyle = '#78350f'; // wood frame
     this.ctx.fillRect(cx, cy, w, h);
     
@@ -655,11 +653,11 @@ export class CanvasRenderer {
     this.ctx.fillRect(cx + 2, cy + 2, w - 4, 3);
     this.ctx.fillRect(cx + 2, cy + 6, w - 4, h - 8);
 
-    // Iron locking band
+    // iron locking band
     this.ctx.fillStyle = '#4b5563';
     this.ctx.fillRect(px + size/2 - 1, cy, 2, h);
     
-    // Keyhole lock
+    // keyhole lock
     this.ctx.fillStyle = '#000';
     this.ctx.fillRect(px + size/2 - 2, cy + 4, 4, 3);
     
@@ -671,12 +669,12 @@ export class CanvasRenderer {
     this.ctx.shadowBlur = 8;
     this.ctx.fillStyle = color;
     
-    // Draw triple towers
+    // draw triple towers
     this.ctx.fillRect(px + 2, py + 6, 3, 7);
     this.ctx.fillRect(px + 6, py + 3, 4, 10);
     this.ctx.fillRect(px + 11, py + 6, 3, 7);
     
-    // Crest flags
+    // crest flags
     this.ctx.fillStyle = '#fbbf24';
     this.ctx.beginPath();
     this.ctx.moveTo(px + 8, py + 1);
@@ -689,7 +687,7 @@ export class CanvasRenderer {
   }
 
   drawShip(px, py, size, color) {
-    this.ctx.fillStyle = '#7c2d12'; // Wood hull
+    this.ctx.fillStyle = '#7c2d12'; // wood hull
     this.ctx.beginPath();
     this.ctx.moveTo(px + 3, py + 10);
     this.ctx.lineTo(px + 13, py + 10);
@@ -698,7 +696,7 @@ export class CanvasRenderer {
     this.ctx.closePath();
     this.ctx.fill();
 
-    // Sails
+    // ship sails
     this.ctx.fillStyle = color;
     this.ctx.beginPath();
     this.ctx.moveTo(px + 8, py + 2);
@@ -715,11 +713,11 @@ export class CanvasRenderer {
     this.ctx.fill();
   }
 
-  // Draw overlay frames for active nodes, splits, corridoors
+  // draw overlay frames for active nodes, splits, corridoors
   drawDungeonOverlays(snapshot) {
     const size = this.tileSize;
 
-    // 1. Draw split lines
+    // 1. draw split lines
     if (snapshot.highlights) {
       snapshot.highlights.forEach(h => {
         if (h.type === 'split_v') {
@@ -749,7 +747,7 @@ export class CanvasRenderer {
       });
     }
 
-    // 2. Draw border of the Active Partition / Node currently computed
+    // 2. draw border of the active partition / node currently computed
     if (snapshot.highlightNode) {
       const node = snapshot.highlightNode;
       this.ctx.strokeStyle = '#22c55e'; // glowing green border
@@ -761,7 +759,7 @@ export class CanvasRenderer {
     }
   }
 
-  // Draw overlay frames for isolated parts, or iterations
+  // draw overlay frames for isolated parts, or iterations
   drawCaveOverlays(snapshot) {
     const size = this.tileSize;
 
@@ -785,7 +783,7 @@ export class CanvasRenderer {
     }
   }
 
-  // Topographic lines overlay for map height
+  // topographic lines overlay for map height
   drawTerrainOverlays(snapshot) {
     if (snapshot.phase === 'heightmap' || !snapshot.heightMap) return;
     
@@ -794,14 +792,14 @@ export class CanvasRenderer {
     const height = grid.length;
     const width = grid[0].length;
     
-    // Draw topographic outlines (contours) at distinct boundaries
+    // draw topographic outlines (contours) at distinct boundaries
     this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     
     for (let y = 0; y < height - 1; y++) {
       for (let x = 0; x < width - 1; x++) {
-        // If current biome code is different from right/bottom neighbor, draw border segment
+        // if current biome code is different from right/bottom neighbor, draw border segment
         const val = grid[y][x];
         const rightVal = grid[y][x+1];
         const downVal = grid[y+1][x];

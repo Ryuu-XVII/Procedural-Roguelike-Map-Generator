@@ -1,6 +1,4 @@
-/**
- * Binary Space Partitioning (BSP) Dungeon Generator
- */
+// bsp dungeon gen
 export class BSPDungeonGenerator {
   constructor(width = 60, height = 40, seed = "dungeon123") {
     this.width = width;
@@ -9,15 +7,15 @@ export class BSPDungeonGenerator {
     this.random = this.createRandom(seed);
     this.grid = [];
     this.snapshots = [];
-    this.nodes = []; // BSP Tree nodes
+    this.nodes = []; // bsp tree nodes
     
-    // Configs
+    // configs
     this.minNodeSize = 10;
     this.maxNodeSize = 25;
     this.roomMinPadding = 2;
   }
 
-  // mulberry32 seedable generator
+  // prng mulberry32
   createRandom(seedStr) {
     let hash = 0;
     for (let i = 0; i < seedStr.length; i++) {
@@ -33,12 +31,12 @@ export class BSPDungeonGenerator {
     };
   }
 
-  // Helper to clone a 2D grid
+  // copy grid
   cloneGrid(grid) {
     return grid.map(row => [...row]);
   }
 
-  // Record a visual frame
+  // take snapshot
   recordSnapshot(logMessage, highlightNode = null, highlights = []) {
     this.snapshots.push({
       grid: this.cloneGrid(this.grid),
@@ -64,7 +62,7 @@ export class BSPDungeonGenerator {
       }
     }
 
-    // Leaf nodes containing rooms
+    // room count
     this.nodes.forEach(n => {
       if (n.room) roomCount++;
     });
@@ -90,10 +88,10 @@ export class BSPDungeonGenerator {
     this.nodes = [];
     this.random = this.createRandom(this.seedString);
 
-    // Initial empty state
+    // initial empty state
     this.recordSnapshot("Initialized a solid rock dungeon grid.");
 
-    // Define root BSP node (entire map minus 1 margin for edge walls)
+    // root tree node
     const rootNode = {
       id: 1,
       x: 1,
@@ -116,28 +114,28 @@ export class BSPDungeonGenerator {
     while (queue.length > 0) {
       const node = queue.shift();
       
-      // Try to split the node
+      // can split check
       const canSplitH = node.w > this.maxNodeSize || (node.w > this.minNodeSize * 2 && this.random() > 0.3);
       const canSplitV = node.h > this.maxNodeSize || (node.h > this.minNodeSize * 2 && this.random() > 0.3);
       
       let splitH = false;
       if (canSplitH && canSplitV) {
-        splitH = this.random() > 0.5; // Randomly choose orientation
+        splitH = this.random() > 0.5; // randomly choose orientation
       } else if (canSplitH) {
         splitH = true;
       } else if (canSplitV) {
         splitH = false;
       } else {
-        continue; // Cannot split further
+        continue; // cannot split further
       }
 
       if (splitH) {
-        // Vertical split line (splits horizontally into left/right)
+        // vertical split line (splits horizontally into left/right)
         const minSplit = this.minNodeSize;
         const maxSplit = node.w - this.minNodeSize;
         if (maxSplit <= minSplit) continue;
         
-        // Random split point
+        // rand split pos
         const splitPoint = Math.floor(this.random() * (maxSplit - minSplit)) + minSplit;
         
         node.left = {
@@ -173,7 +171,7 @@ export class BSPDungeonGenerator {
           [{ x: node.x + splitPoint, y: node.y, w: 1, h: node.h, type: 'split_v' }]
         );
       } else {
-        // Horizontal split line (splits vertically into top/bottom - we call them left/right for simplicity)
+        // horizontal split line (splits vertically into top/bottom - we call them left/right for simplicity)
         const minSplit = this.minNodeSize;
         const maxSplit = node.h - this.minNodeSize;
         if (maxSplit <= minSplit) continue;
@@ -215,11 +213,11 @@ export class BSPDungeonGenerator {
       }
     }
 
-    // Carve Rooms in leaf nodes
+    // carve rooms
     const leaves = this.nodes.filter(n => n.left === null && n.right === null);
     
     leaves.forEach(leaf => {
-      // Choose room sizes smaller than the leaf bounds
+      // room bounds sizing
       const minW = Math.max(5, this.minNodeSize - this.roomMinPadding * 2);
       const minH = Math.max(5, this.minNodeSize - this.roomMinPadding * 2);
       
@@ -231,7 +229,7 @@ export class BSPDungeonGenerator {
       const roomW = Math.floor(this.random() * (maxW - minW + 1)) + minW;
       const roomH = Math.floor(this.random() * (maxH - minH + 1)) + minH;
       
-      // Random position inside the leaf
+      // rand room pos
       const roomX = leaf.x + Math.floor(this.random() * (leaf.w - roomW - this.roomMinPadding * 2)) + this.roomMinPadding;
       const roomY = leaf.y + Math.floor(this.random() * (leaf.h - roomH - this.roomMinPadding * 2)) + this.roomMinPadding;
       
@@ -242,10 +240,10 @@ export class BSPDungeonGenerator {
         h: roomH
       };
 
-      // Carve the room tiles
+      // fill floor tiles
       for (let y = roomY; y < roomY + roomH; y++) {
         for (let x = roomX; x < roomX + roomW; x++) {
-          this.grid[y][x] = 1; // 1 = Room Floor
+          this.grid[y][x] = 1; // 1 = room floor
         }
       }
       
@@ -255,10 +253,10 @@ export class BSPDungeonGenerator {
       );
     });
 
-    // Connect Rooms recursivly by ascending the BSP tree
+    // connect rooms recursivly by ascending the bsp tree
     this.connectNodes(rootNode);
 
-    // Place Decorations/Interactives (Player, Chest, Enemies)
+    // place decorations/interactives (player, chest, enemies)
     this.decorateDungeon(leaves);
 
     return this.snapshots;
@@ -268,11 +266,11 @@ export class BSPDungeonGenerator {
   connectNodes(node) {
     if (!node || node.left === null || node.right === null) return;
     
-    // Recurse down first
+    // recurse down first
     this.connectNodes(node.left);
     this.connectNodes(node.right);
     
-    // Connect left child and right child
+    // connect left child and right child
     const roomA = this.findRoom(node.left);
     const roomB = this.findRoom(node.right);
     
@@ -281,7 +279,7 @@ export class BSPDungeonGenerator {
     }
   }
 
-  // Find any carved room inside a node or its children
+  // get room leaf
   findRoom(node) {
     if (!node) return null;
     if (node.room) return node.room;
@@ -292,9 +290,9 @@ export class BSPDungeonGenerator {
     return this.findRoom(node.right);
   }
 
-  // Carve corridoor between two room structures
+  // carve corridoor between two room structures
   carveCorridor(roomA, roomB, parentNode) {
-    // Get center points of rooms
+    // center points
     const cxA = Math.floor(roomA.x + roomA.w / 2);
     const cyA = Math.floor(roomA.y + roomA.h / 2);
     const cxB = Math.floor(roomB.x + roomB.w / 2);
@@ -302,13 +300,13 @@ export class BSPDungeonGenerator {
 
     const highlights = [];
     
-    // Choose starting axis randomly (Horizontal first or Vertical first)
+    // rand start axis
     if (this.random() > 0.5) {
-      // Horizontal segment then Vertical segment
+      // horizontal segment then vertical segment
       this.carveHorizontal(cxA, cxB, cyA, highlights);
       this.carveVertical(cyA, cyB, cxB, highlights);
     } else {
-      // Vertical segment then Horizontal segment
+      // vertical segment then horizontal segment
       this.carveVertical(cyA, cyB, cxA, highlights);
       this.carveHorizontal(cxA, cxB, cyB, highlights);
     }
@@ -342,25 +340,25 @@ export class BSPDungeonGenerator {
     }
   }
 
-  // Populate maps with interactables (Player, Chest, Keys, Enemies, Doors)
+  // place actors/decorations
   decorateDungeon(leaves) {
     const validRooms = leaves.filter(l => l.room !== null).map(l => l.room);
     if (validRooms.length === 0) return;
 
-    // Pick Room A for player spawn
+    // hero spawn
     const playerRoom = validRooms[0];
     const playerX = Math.floor(playerRoom.x + playerRoom.w / 2);
     const playerY = Math.floor(playerRoom.y + playerRoom.h / 2);
-    this.grid[playerY][playerX] = 4; // 4 = Player Spawn
+    this.grid[playerY][playerX] = 4; // 4 = player spawn
 
-    // Pick the most distant room for Chest
+    // exit chest spawn
     let bestDist = -1;
     let chestRoomIndex = validRooms.length - 1;
     for (let i = 1; i < validRooms.length; i++) {
       const rm = validRooms[i];
       const cx = Math.floor(rm.x + rm.w / 2);
       const cy = Math.floor(rm.y + rm.h / 2);
-      const d = Math.abs(cx - playerX) + Math.abs(cy - playerY); // Manhattan distance
+      const d = Math.abs(cx - playerX) + Math.abs(cy - playerY); // manhattan distance
       if (d > bestDist) {
         bestDist = d;
         chestRoomIndex = i;
@@ -369,22 +367,22 @@ export class BSPDungeonGenerator {
     const chestRoom = validRooms[chestRoomIndex];
     const chestX = Math.floor(chestRoom.x + chestRoom.w / 2);
     const chestY = Math.floor(chestRoom.y + chestRoom.h / 2);
-    this.grid[chestY][chestX] = 5; // 5 = Chest / Goal
+    this.grid[chestY][chestX] = 5; // 5 = chest / goal
 
-    // Place some enemies (6) and ambiant lights/doors in remaining rooms
+    // place some enemies (6) and ambiant lights/doors in remaining rooms
     const decorationHighlights = [];
     validRooms.forEach((room, index) => {
-      // Add enemies to non-player rooms
+      // add enemies to non-player rooms
       if (index !== 0) {
         const enemyX = Math.floor(room.x + this.random() * (room.w - 2)) + 1;
         const enemyY = Math.floor(room.y + this.random() * (room.h - 2)) + 1;
         if (this.grid[enemyY][enemyX] === 1) {
-          this.grid[enemyY][enemyX] = 6; // 6 = Enemy
+          this.grid[enemyY][enemyX] = 6; // 6 = enemy
           decorationHighlights.push({ x: enemyX, y: enemyY, type: 'spawn_enemy' });
         }
       }
 
-      // 1. Place archetectural Pillars (9) inside large rooms!
+      // 1. place archetectural pillars (9) inside large rooms!
       if (room.w >= 7 && room.h >= 7) {
         const px1 = room.x + 2;
         const px2 = room.x + room.w - 3;
@@ -398,30 +396,30 @@ export class BSPDungeonGenerator {
         
         pillarCoords.forEach(c => {
           if (this.grid[c.y][c.x] === 1) {
-            this.grid[c.y][c.x] = 9; // 9 = Pillar
+            this.grid[c.y][c.x] = 9; // 9 = pillar
           }
         });
       }
 
-      // 2. Place random Floor Detail objects (8 = Cobweb, 10 = Gold, 11 = Broken Pot, 12 = Skeleton)
+      // floor items
       for (let y = room.y; y < room.y + room.h; y++) {
         for (let x = room.x; x < room.x + room.w; x++) {
           if (this.grid[y][x] === 1) {
-            // Corner cobwebs
+            // corner cobwebs
             const isCorner = 
               (x === room.x || x === room.x + room.w - 1) &&
               (y === room.y || y === room.y + room.h - 1);
               
             if (isCorner && this.random() < 0.4) {
-              this.grid[y][x] = 8; // 8 = Cobweb
+              this.grid[y][x] = 8; // 8 = cobweb
             } else if (this.random() < 0.05) {
               const roll = this.random();
               if (roll < 0.4) {
-                this.grid[y][x] = 10; // 10 = Gold Coins
+                this.grid[y][x] = 10; // 10 = gold coins
               } else if (roll < 0.8) {
-                this.grid[y][x] = 11; // 11 = Broken Pot
+                this.grid[y][x] = 11; // 11 = broken pot
               } else {
-                this.grid[y][x] = 12; // 12 = Skeleton
+                this.grid[y][x] = 12; // 12 = skeleton
               }
             }
           }
@@ -429,32 +427,32 @@ export class BSPDungeonGenerator {
       }
     });
 
-    // Detect intersectons where a room connects to a corridoor to place Doors (3)
+    // detect intersectons where a room connects to a corridoor to place doors (3)
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
-        // If it's a corridoor floor
+        // if it's a corridoor floor
         if (this.grid[y][x] === 2) {
-          // Check neighbors: if it connects to room floor (1)
+          // check neighbors: if it connects to room floor (1)
           const leftIsRoom = this.grid[y][x - 1] === 1;
           const rightIsRoom = this.grid[y][x + 1] === 1;
           const topIsRoom = this.grid[y - 1][x] === 1;
           const bottomIsRoom = this.grid[y + 1][x] === 1;
 
-          // Vertical corridoor entering horizontal room door
+          // vertical corridoor entering horizontal room door
           if ((leftIsRoom || rightIsRoom) && this.grid[y - 1][x] !== 1 && this.grid[y + 1][x] !== 1) {
-            this.grid[y][x] = 3; // 3 = Door
+            this.grid[y][x] = 3; // 3 = door
             decorationHighlights.push({ x: x, y: y, type: 'door' });
           }
-          // Horizontal corridoor entering vertical room door
+          // horizontal corridoor entering vertical room door
           else if ((topIsRoom || bottomIsRoom) && this.grid[y][x - 1] !== 1 && this.grid[y][x + 1] !== 1) {
-            this.grid[y][x] = 3; // 3 = Door
+            this.grid[y][x] = 3; // 3 = door
             decorationHighlights.push({ x: x, y: y, type: 'door' });
           }
         }
       }
     }
 
-    // 3. Scan for Wall Torches (7): Place a torch on a solid wall directly above a floor tile
+    // wall torches
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
         if ((this.grid[y][x] === 1 || this.grid[y][x] === 2) && this.grid[y - 1][x] === 0) {
@@ -464,7 +462,7 @@ export class BSPDungeonGenerator {
               if (this.grid[y - 1][x + dx] === 7) tooClose = true;
             }
             if (!tooClose) {
-              this.grid[y - 1][x] = 7; // 7 = Wall Torch
+              this.grid[y - 1][x] = 7; // 7 = wall torch
               decorationHighlights.push({ x: x, y: y - 1, type: 'torch' });
             }
           }

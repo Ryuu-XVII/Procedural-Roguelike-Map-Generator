@@ -3,14 +3,14 @@ import { CellularCaveGenerator } from './algorithms/cellular-cave.js';
 import { FractalTerrainGenerator } from './algorithms/fractal-terrain.js';
 import { CanvasRenderer } from './canvas-renderer.js';
 
-// algorythm Pseudo-code Database
+// code text database
 const pseudoCodeDb = {
-  bsp: `// Recursive BSP Partitioning
+  bsp: `// recursive bsp partitioning
 <span class="keyword">function</span> <span class="function">GenerateBSPDungeon</span>(width, height) {
   <span class="keyword">let</span> root = <span class="keyword">new</span> <span class="function">BSPNode</span>(<span class="number">0</span>, <span class="number">0</span>, width, height);
   <span class="keyword">let</span> queue = [root];
   
-  <span class="comment">// 1. Split boxes recursivly</span>
+  <span class="comment">// 1. split boxes recursivly</span>
   <span class="keyword">while</span> (queue.length > <span class="number">0</span>) {
     <span class="keyword">let</span> node = queue.shift();
     <span class="keyword">if</span> (node.w > max || node.h > max) {
@@ -19,20 +19,20 @@ const pseudoCodeDb = {
     }
   }
   
-  <span class="comment">// 2. Carve rooms inside leaf nodes</span>
+  <span class="comment">// 2. carve rooms inside leaf nodes</span>
   <span class="keyword">for</span> (<span class="keyword">let</span> leaf <span class="keyword">of</span> root.getLeaves()) {
     leaf.carveRoom();
   }
   
-  <span class="comment">// 3. Route corridoors traversing up the tree</span>
+  <span class="comment">// 3. route corridoors traversing up the tree</span>
   root.connectChildren();
 }`,
-  ca: `// Cellular Automata Cave Generation
+  ca: `// cellular automata cave generation
 <span class="keyword">function</span> <span class="function">GenerateCellularCave</span>(width, height) {
-  <span class="comment">// 1. Random seeding (wall prob = 45%)</span>
+  <span class="comment">// 1. random seeding (wall prob = 45%)</span>
   <span class="keyword">let</span> grid = RandomNoiseGrid(width, height, <span class="number">0.45</span>);
   
-  <span class="comment">// 2. Smooth map using Life-like cellular rules</span>
+  <span class="comment">// 2. smooth map using life-like cellular rules</span>
   <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; iterations; i++) {
     <span class="keyword">let</span> nextGrid = clone(grid);
     <span class="keyword">for</span> (<span class="keyword">let</span> cell <span class="keyword">of</span> grid) {
@@ -43,15 +43,15 @@ const pseudoCodeDb = {
     grid = nextGrid;
   }
   
-  <span class="comment">// 3. Flood-fill connectivity prune</span>
+  <span class="comment">// 3. flood-fill connectivity prune</span>
   <span class="keyword">let</span> chambers = findChambers(grid);
   pruneDisconnectedChambers(chambers);
 }`,
-  terrain: `// Multi-Octave Fractal Terrain (FBM)
+  terrain: `// multi-octave fractal terrain (fbm)
 <span class="keyword">function</span> <span class="function">GenerateFractalTerrain</span>(width, height) {
   <span class="keyword">let</span> heightMap = FloatGrid(width, height);
   
-  <span class="comment">// 1. Accumulate Octaves (FBM)</span>
+  <span class="comment">// 1. accumulate octaves (fbm)</span>
   <span class="keyword">for</span> (<span class="keyword">let</span> oct = <span class="number">0</span>; oct &lt; octaves; oct++) {
     <span class="keyword">let</span> freq = Math.pow(<span class="number">2.0</span>, oct) * scale;
     <span class="keyword">let</span> amp = Math.pow(<span class="number">0.5</span>, oct);
@@ -60,7 +60,7 @@ const pseudoCodeDb = {
     }
   }
   
-  <span class="comment">// 2. Normalize and colorize bands</span>
+  <span class="comment">// 2. normalize and colorize bands</span>
   normalize(heightMap); <span class="comment">// bounds in [0, 1]</span>
   <span class="keyword">for</span> (<span class="keyword">let</span> c <span class="keyword">of</span> heightMap) {
     grid[c] = mapToBiome(heightMap[c]);
@@ -68,7 +68,7 @@ const pseudoCodeDb = {
 }`
 };
 
-// algorythm Explanation Database
+// explanations for panels
 const explanationDb = {
   bsp: `
     <h4>Binary Space Partitioning (BSP)</h4>
@@ -105,7 +105,7 @@ class AppController {
     this.canvas = document.getElementById('map-canvas');
     this.renderer = new CanvasRenderer(this.canvas);
     
-    // Core Application State
+    // state vars
     this.activeAlgo = 'bsp';
     this.seed = 'rogue-quest';
     this.width = 60;
@@ -116,7 +116,7 @@ class AppController {
     this.fps = 2;
     this.lastFrameTime = 0;
 
-    // Generators instances
+    // instances of algorythms
     this.bspGenerator = new BSPDungeonGenerator();
     this.caGenerator = new CellularCaveGenerator();
     this.terrainGenerator = new FractalTerrainGenerator();
@@ -125,16 +125,16 @@ class AppController {
     this.initUI();
     this.bindEvents();
     
-    // Auto-generate map on startup
+    // startup run
     this.generateNewMap();
   }
 
-  // Handle high DPI Retina screen displays for crisp pixels
+  // retina screen support
   initDPI() {
     const dpr = window.devicePixelRatio || 1;
     const rect = this.canvas.getBoundingClientRect();
     
-    // Fail-safe if client layout is delayed or 0
+    // safety check if canvas size is zero
     let width = rect.width;
     let height = rect.height;
     if (width <= 0 || height <= 0) {
@@ -146,13 +146,13 @@ class AppController {
     this.canvas.height = height * dpr;
     this.renderer.ctx.scale(dpr, dpr);
     
-    // Keep internal tracking of width and height in cooridinates
+    // store width/height internally
     this.renderer.canvasWidth = width;
     this.renderer.canvasHeight = height;
   }
 
   initUI() {
-    // Make sure sidebar inputs have initial states sync
+    // sync sidebar inputs on start
     document.getElementById('width-val').innerText = this.width;
     document.getElementById('height-val').innerText = this.height;
     
@@ -160,7 +160,7 @@ class AppController {
   }
 
   bindEvents() {
-    // 1. Core Generator Actions
+    // core buttons
     document.getElementById('algo-select').addEventListener('change', (e) => {
       this.activeAlgo = e.target.value;
       this.updateAlgorithmPanel();
@@ -188,7 +188,7 @@ class AppController {
       this.generateNewMap();
     });
 
-    // 2. Slider Adjustments
+    // slider event listeners
     document.getElementById('width-range').addEventListener('input', (e) => {
       this.width = parseInt(e.target.value);
       document.getElementById('width-val').innerText = this.width;
@@ -199,7 +199,7 @@ class AppController {
       document.getElementById('height-val').innerText = this.height;
     });
 
-    // Sub-sliders
+    // sub sliders helper
     const bindSliderVal = (sliderId, valId, suffix = '') => {
       document.getElementById(sliderId).addEventListener('input', (e) => {
         document.getElementById(valId).innerText = e.target.value + suffix;
@@ -212,14 +212,14 @@ class AppController {
     bindSliderVal('terrain-octaves', 'terrain-octaves-val');
     bindSliderVal('terrain-scale', 'terrain-scale-val');
 
-    // 3. Viewport Options
+    // view checkboxes
     const gridToggle = document.getElementById('toggle-grid');
     gridToggle.addEventListener('change', (e) => {
       this.renderer.showGrid = e.target.checked;
       this.renderCurrentStep();
     });
 
-    // 4. Floating HUD View tools
+    // canvas zoom buttons
     document.getElementById('btn-zoom-in').addEventListener('click', () => {
       this.renderer.zoom = Math.min(8.0, this.renderer.zoom * 1.2);
       this.renderCurrentStep();
@@ -236,12 +236,12 @@ class AppController {
       this.renderCurrentStep();
     });
 
-    // Canvas redrawing callback
+    // render callback
     this.renderer.onRedraw = () => {
       this.renderCurrentStep();
     };
 
-    // 5. Playback & Scrubber Controls
+    // playback slider
     document.getElementById('step-scrubber').addEventListener('input', (e) => {
       this.pauseAnimation();
       this.currentStep = parseInt(e.target.value);
@@ -277,7 +277,7 @@ class AppController {
       document.getElementById('speed-val').innerText = this.fps;
     });
 
-    // 6. Right tab switcher
+    // tab switching logic
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
@@ -290,40 +290,40 @@ class AppController {
       });
     });
 
-    // Resize viewport
+    // resize handler
     window.addEventListener('resize', () => {
       this.initDPI();
       this.renderCurrentStep();
     });
   }
 
-  // Swap settings UI and text information panels
+  // update active panel ui
   updateAlgorithmPanel() {
-    // Hide all settings panes first
+    // hide other settings
     document.querySelectorAll('.algo-settings-pane').forEach(p => p.style.display = 'none');
     
-    // Reveal target pane
+    // show target settings
     document.getElementById(`settings-${this.activeAlgo}`).style.display = 'block';
 
-    // Update explanations walkthrough
+    // load walkthrough text
     document.getElementById('algo-explanation-content').innerHTML = explanationDb[this.activeAlgo];
 
-    // Update pseudo-code block
+    // load code text
     document.getElementById('code-snippet').innerHTML = pseudoCodeDb[this.activeAlgo];
   }
 
-  // Trigger main computational generation
+  // run the map gen
   generateNewMap() {
     this.pauseAnimation();
     
-    // Recalculate DPI and canvas buffer demensions based on the active laid-out CSS size
+    // recalculate dpi size
     this.initDPI();
     
-    // Read seed and size parameters
+    // read user inputs
     const seedVal = document.getElementById('seed-input').value.trim() || 'rogue-quest';
     this.seed = seedVal;
 
-    // Run custom generation based on dropdown selection
+    // choose generator and run
     if (this.activeAlgo === 'bsp') {
       const minN = parseInt(document.getElementById('bsp-min-size').value);
       const maxN = parseInt(document.getElementById('bsp-max-size').value);
@@ -359,37 +359,37 @@ class AppController {
       this.snapshots = this.terrainGenerator.generate();
     }
 
-    // Set timeline bounds
+    // set timeline bounds
     const scrubber = document.getElementById('step-scrubber');
     scrubber.max = this.snapshots.length - 1;
     scrubber.value = 0;
     this.currentStep = 0;
 
-    // Center map inside viewer
+    // center map inside viewer
     this.renderer.centerMap(this.width, this.height);
 
-    // Auto animate from frame 0 so they see the algorythm carve step-by-step
+    // auto animate from frame 0 so they see the algorythm carve step-by-step
     this.startAnimation();
   }
 
-  // Single step rendering pipeline
+  // single step rendering pipeline
   renderCurrentStep() {
     if (this.snapshots.length === 0) return;
     
     const snapshot = this.snapshots[this.currentStep];
     
-    // Draw on HTML Canvas
+    // draw on html canvas
     this.renderer.render(snapshot, this.activeAlgo);
 
-    // Sync scrubber and timeline numerical controls
+    // update scrubber timeline
     document.getElementById('step-scrubber').value = this.currentStep;
     document.getElementById('step-counter').innerText = `Step ${this.currentStep + 1} / ${this.snapshots.length}`;
 
-    // Sync HUD Displays
+    // update pan/zoom hud
     document.getElementById('hud-zoom').innerText = `${this.renderer.zoom.toFixed(1)}x`;
     document.getElementById('hud-pan').innerText = `${Math.round(this.renderer.panX)}, ${Math.round(this.renderer.panY)}`;
 
-    // Sync Metrics Panel
+    // update metrics
     if (snapshot.metrics) {
       const keys = Object.keys(snapshot.metrics);
       const values = Object.values(snapshot.metrics);
@@ -401,26 +401,26 @@ class AppController {
           card.querySelector('.metric-label').innerText = keys[idx];
           card.querySelector('.metric-val').innerText = values[idx];
         } else {
-          card.style.display = 'none'; // Hide extra cards if map type returns fewer metrics
+          card.style.display = 'none'; // hide extra cards if map type returns fewer metrics
         }
       });
     }
 
-    // Update Console log output pane
+    // update console log output pane
     this.updateConsoleLogs();
   }
 
   updateConsoleLogs() {
     const consoleBody = document.getElementById('console-output');
-    consoleBody.innerHTML = ''; // Clear previous
+    consoleBody.innerHTML = ''; // clear previous
 
-    // Replay log history up to current step
+    // draw log history
     for (let i = 0; i <= this.currentStep; i++) {
       const snapshot = this.snapshots[i];
       if (!snapshot) continue;
       
       const pad = (num) => String(num).padStart(2, '0');
-      // Simulated timestamp step
+      // log timestamps
       const stepMinutes = Math.floor(i / 60);
       const stepSeconds = i % 60;
       const timestamp = `[00:${pad(stepMinutes)}:${pad(stepSeconds)}]`;
@@ -428,7 +428,7 @@ class AppController {
       const logLine = document.createElement('div');
       logLine.className = 'console-line';
       if (i === this.currentStep) {
-        logLine.classList.add('highlight'); // Glowing color for current active line
+        logLine.classList.add('highlight'); // glow current step
       }
 
       logLine.innerHTML = `
@@ -439,22 +439,22 @@ class AppController {
       consoleBody.appendChild(logLine);
     }
 
-    // Smoothly scroll logger container to bottom
+    // scroll log
     consoleBody.scrollTop = consoleBody.scrollHeight;
   }
 
-  // Animation Playback state machine loop
+  // play animator loop
   startAnimation() {
     if (this.isAnimating) return;
     
     this.isAnimating = true;
     
-    // Switch Play Icon into Pause
+    // toggle play button
     const playIcon = document.getElementById('play-icon');
     playIcon.innerText = 'pause';
     document.getElementById('btn-playback-play').classList.add('active-glow');
 
-    // If already at final frame, wrap around to beginning
+    // if already at final frame, wrap around to beginning
     if (this.currentStep >= this.snapshots.length - 1) {
       this.currentStep = 0;
     }
@@ -468,7 +468,7 @@ class AppController {
     
     this.isAnimating = false;
     
-    // Switch icon back to play
+    // switch icon back to play
     const playIcon = document.getElementById('play-icon');
     playIcon.innerText = 'play_arrow';
     document.getElementById('btn-playback-play').classList.remove('active-glow');
@@ -488,7 +488,7 @@ class AppController {
         this.currentStep++;
         this.renderCurrentStep();
       } else {
-        // Animation finished, pause
+        // animation finished, pause
         this.pauseAnimation();
       }
     }
@@ -497,7 +497,7 @@ class AppController {
   }
 }
 
-// Instantiate controller when window completly loads (guarantees CSS layouts have computed)
+// instantiate controller when window completly loads (guarantees css layouts have computed)
 window.addEventListener('load', () => {
   window.app = new AppController();
 });

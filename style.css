@@ -1,9 +1,9 @@
-/* Premium CSS Styling for the Procedural Map Generator Dashboard */
+/* layout styles */
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* HSL Tailored Color Palette */
+  /* colors */
   --bg-deep: 224 71% 4%;       /* #020617 deep slate */
   --bg-card: 222 47% 11%;      /* #0f172a glass card */
   --bg-header: 224 71% 7%;
@@ -39,7 +39,7 @@ body {
   flex-direction: column;
 }
 
-/* Glassmorphism utility */
+/* glass boxes */
 .glass {
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(12px);
@@ -54,7 +54,7 @@ body {
   border-color: var(--border-glass-hover);
 }
 
-/* Dashboard Header styling */
+/* top header */
 header {
   background: rgba(9, 13, 22, 0.8);
   backdrop-filter: blur(8px);
@@ -100,14 +100,14 @@ header {
   border: 1px solid rgba(6, 182, 212, 0.2);
 }
 
-/* Top Control Bar */
+/* header controls */
 .top-controls {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-/* Dropdowns & Inputs */
+/* inputs */
 .select-wrapper, .input-wrapper {
   position: relative;
 }
@@ -146,7 +146,7 @@ select {
   pointer-events: none;
 }
 
-/* Styled Action Buttons */
+/* buttons styling */
 .btn-primary {
   background: linear-gradient(135deg, hsl(var(--accent-cyan)) 0%, #0891b2 100%);
   color: #030712;
@@ -173,7 +173,7 @@ select {
   transform: translateY(1px);
 }
 
-/* Dashboard Core Layout */
+/* main grid */
 .dashboard-grid {
   flex: 1;
   display: grid;
@@ -184,7 +184,7 @@ select {
   max-width: 100%;
 }
 
-/* Sidebar Styling */
+/* sidebar */
 aside {
   display: flex;
   flex-direction: column;
@@ -193,7 +193,7 @@ aside {
   padding-right: 4px;
 }
 
-/* Beautiful custom scrollbars */
+/* scrollbar reset */
 aside::-webkit-scrollbar, .panel-body::-webkit-scrollbar {
   width: 6px;
 }
@@ -254,7 +254,7 @@ aside::-webkit-scrollbar-thumb:hover, .panel-body::-webkit-scrollbar-thumb:hover
   gap: 8px;
 }
 
-/* Slider Controls */
+/* inputs */
 input[type="range"] {
   -webkit-appearance: none;
   width: 100%;
@@ -287,7 +287,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   text-align: right;
 }
 
-/* Switch styling */
+/* checkbox toggle */
 .switch {
   position: relative;
   display: inline-block;
@@ -337,7 +337,7 @@ input:checked + .slider-switch:before {
   transform: translateX(22px);
 }
 
-/* Seed Input Wrapper */
+/* seed row */
 .seed-wrapper {
   display: flex;
   gap: 8px;
@@ -364,7 +364,7 @@ input:checked + .slider-switch:before {
   border-color: var(--border-glass-hover);
 }
 
-/* Center Canvas Viewer styling */
+/* middle viewer */
 .viewer-panel {
   display: flex;
   flex-direction: column;
@@ -389,7 +389,7 @@ canvas {
   height: 100%;
 }
 
-/* Floating HUD elements on Canvas */
+/* canvas hud overlay */
 .canvas-hud {
   position: absolute;
   top: 16px;
@@ -449,7 +449,7 @@ canvas {
   box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
 }
 
-/* Scrubber / Playback Controls footer */
+/* footer scrubber */
 .scrub-panel {
   padding: 16px;
   display: flex;
@@ -497,7 +497,7 @@ canvas {
   border-color: transparent;
 }
 
-/* Premium Timeline Scrubber */
+/* scrubber style */
 .timeline-wrapper {
   flex: 1;
   display: flex;
@@ -530,7 +530,7 @@ canvas {
   text-align: center;
 }
 
-/* Right Panel Layout (Tabs & Stats) */
+/* right info sidebar */
 .info-sidebar {
   display: flex;
   flex-direction: column;
@@ -539,7 +539,7 @@ canvas {
   height: 100%;
 }
 
-/* Metrics Table */
+/* stats cards */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -569,7 +569,7 @@ canvas {
   color: hsl(var(--accent-green));
 }
 
-/* Retro Log Panel */
+/* console logger */
 .console-panel {
   flex: 1;
   min-height: 160px;
@@ -615,7 +615,7 @@ canvas {
   text-shadow: 0 0 4px rgba(6, 182, 212, 0.3);
 }
 
-/* Tabs structure */
+/* tab buttons */
 .tabs-header {
   display: flex;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -669,7 +669,7 @@ canvas {
   display: block;
 }
 
-/* Pseudo-code listing container */
+/* pre blocks */
 pre {
   background: #040711;
   padding: 12px;
@@ -686,7 +686,7 @@ pre code {
   display: block;
 }
 
-/* Pseudo-code highlighting */
+/* syntax colors */
 .keyword { color: #f43f5e; font-weight: bold; } /* rose */
 .function { color: #3b82f6; }                  /* blue */
 .comment { color: #64748b; font-style: italic; }/* slate */
@@ -715,7 +715,7 @@ pre code {
   margin-bottom: 6px;
 }
 
-/* Global Animations */
+/* pulse anims */
 @keyframes pulse {
   0% {
     transform: scale(0.9);
@@ -732,7 +732,7 @@ pre code {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Media Queries for Responsive adjustments */
+/* responsive responsive */
 @media(max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
